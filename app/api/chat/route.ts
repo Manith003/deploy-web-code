@@ -1,5 +1,4 @@
 import { type NextRequest, NextResponse } from "next/server"
-// import { GoogleGenerativeAI } from "@google/generative-ai"
 
 interface ChatMessage {
     role: "user" | "assistant"
@@ -36,7 +35,7 @@ Always provide clear, practical answers.`
             headers: {
                 "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
                 "Content-Type": "application/json",
-                "HTTP-Referer": "http://localhost:3000",
+                "HTTP-Referer": "https://web-code-0lax.onrender.com",
                 "X-Title": "AI IDE",
             },
             body: JSON.stringify({
@@ -69,7 +68,7 @@ Return only the improved prompt.`
             headers: {
                 "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
                 "Content-Type": "application/json",
-                "HTTP-Referer": "http://localhost:3000",
+                "HTTP-Referer": "https://web-code-0lax.onrender.com",
                 "X-Title": "AI IDE",
             },
             body: JSON.stringify({
