@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+// import { GoogleGenerativeAI } from "@google/generative-ai"
 
 interface ChatMessage {
     role: "user" | "assistant"
@@ -22,105 +23,72 @@ async function generateAIResponse(messages: ChatMessage[]) {
 - Troubleshooting errors
 - Code reviews and optimizations
 
-Always provide clear, practical answers. When showing code, use proper formatting with language-specific syntax.
-Keep responses concise but comprehensive. Use code blocks with language specification when providing code examples.`
+Always provide clear, practical answers.`
 
-    const fullMessages = [{ role: "system", content: systemPrompt }, ...messages]
-
-    const prompt = fullMessages.map((msg) => `${msg.role}: ${msg.content}`).join("\n\n")
-
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 15000)
+    const openRouterMessages = [
+        { role: "system", content: systemPrompt },
+        ...messages,
+    ]
 
     try {
-        const response = await fetch("http://localhost:11434/api/generate", {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
             headers: {
+                "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
                 "Content-Type": "application/json",
+                "HTTP-Referer": "http://localhost:3000",
+                "X-Title": "AI IDE",
             },
             body: JSON.stringify({
-                model: "qwen:0.5b",
-                prompt,
-                stream: false,
-                options: {
-                    temperature: 0.7,
-                    top_p: 0.9,
-                    max_tokens: 200,
-                    num_predict: 200,
-                    repeat_penalty: 1.1,
-                    context_length: 4096,
-                },
+                model: "deepseek/deepseek-chat",
+                messages: openRouterMessages,
+                temperature: 0.7,
+                max_tokens: 500,
             }),
-            signal: controller.signal,
         })
 
-        clearTimeout(timeoutId)
-
-        if (!response.ok) {
-            const errorText = await response.text()
-            console.error("Error from AI model API:", errorText)
-            throw new Error(`AI model API error: ${response.status} - ${errorText}`)
-        }
-
         const data = await response.json()
-        if (!data.response) {
-            throw new Error("No response from AI model")
-        }
-        return data.response.trim()
+
+        return data.choices[0].message.content
     } catch (error) {
-        clearTimeout(timeoutId)
-        if ((error as Error).name === "AbortError") {
-            throw new Error("Request timeout: AI model took too long to respond")
-        }
-        console.error("AI generation error:", error)
-        throw error
+        console.error("OpenRouter error:", error)
+        throw new Error("Failed to generate AI response")
     }
 }
 
 async function enhancePrompt(request: EnhancePromptRequest) {
-    const enhancementPrompt = `You are a prompt enhancement assistant. Take the user's basic prompt and enhance it to be more specific, detailed, and effective for a coding AI assistant.
+    const enhancementPrompt = `Enhance this prompt to be more detailed for a coding assistant:
 
-Original prompt: "${request.prompt}"
+"${request.prompt}"
 
-Context: ${request.context ? JSON.stringify(request.context, null, 2) : "No additional context"}
-
-Enhanced prompt should:
-- Be more specific and detailed
-- Include relevant technical context
-- Ask for specific examples or explanations
-- Be clear about expected output format
-- Maintain the original intent
-
-Return only the enhanced prompt, nothing else.`
+Return only the improved prompt.`
 
     try {
-        const response = await fetch("http://localhost:11434/api/generate", {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
             headers: {
+                "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
                 "Content-Type": "application/json",
+                "HTTP-Referer": "http://localhost:3000",
+                "X-Title": "AI IDE",
             },
             body: JSON.stringify({
-                model: "codellama:latest",
-                prompt: enhancementPrompt,
-                stream: false,
-                options: {
-                    temperature: 0.3,
-                    max_tokens: 500,
-                },
+                model: "mistralai/mistral-7b-instruct",
+                messages: [{ role: "user", content: enhancementPrompt }],
+                temperature: 0.3,
+                max_tokens: 300,
             }),
         })
 
-        if (!response.ok) {
-            throw new Error("Failed to enhance prompt")
-        }
-
         const data = await response.json()
-        return data.response?.trim() || request.prompt
+        return data.choices[0].message.content
     } catch (error) {
         console.error("Prompt enhancement error:", error)
-        return request.prompt // Return original if enhancement fails
+        return request.prompt
     }
 }
+
+
 
 export async function POST(req: NextRequest) {
     try {

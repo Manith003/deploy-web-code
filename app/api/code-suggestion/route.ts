@@ -94,71 +94,138 @@ function analyzeCodeContext(content: string, line: number, column: number, fileN
     }
 }
 
+// function buildPrompt(context: CodeContext, suggestionType: string): string {
+//     return `You are an expert code completion assistant. Generate a ${suggestionType} suggestion.
+
+// Language: ${context.language}
+// Framework: ${context.framework}
+
+// Context:
+// ${context.beforeContext}
+// ${context.currentLine.substring(0, context.cursorPosition.column)}|CURSOR|${context.currentLine.substring(context.cursorPosition.column)}
+// ${context.afterContext}
+
+// Analysis:
+// - In Function: ${context.isInFunction}
+// - In Class: ${context.isInClass}
+// - After Comment: ${context.isAfterComment}
+// - Incomplete Patterns: ${context.incompletePatterns.join(", ") || "None"}
+
+// Instructions:
+// 1. Provide only the code that should be inserted at the cursor
+// 2. Maintain proper indentation and style
+// 3. Follow ${context.language} best practices
+// 4. Make the suggestion contextually appropriate
+
+// Generate suggestion:`
+// }
+
 function buildPrompt(context: CodeContext, suggestionType: string): string {
-    return `You are an expert code completion assistant. Generate a ${suggestionType} suggestion.
+    return `
+You are an expert ${context.language} ${context.framework} code completion AI.
 
-Language: ${context.language}
-Framework: ${context.framework}
+Your task: Generate a ${suggestionType} code suggestion.
 
-Context:
+Rules:
+- Only return code
+- No explanation
+- No markdown
+- Maintain indentation
+- Continue from cursor position
+
+Code Context:
+
 ${context.beforeContext}
 ${context.currentLine.substring(0, context.cursorPosition.column)}|CURSOR|${context.currentLine.substring(context.cursorPosition.column)}
 ${context.afterContext}
 
 Analysis:
-- In Function: ${context.isInFunction}
-- In Class: ${context.isInClass}
-- After Comment: ${context.isAfterComment}
-- Incomplete Patterns: ${context.incompletePatterns.join(", ") || "None"}
+In Function: ${context.isInFunction}
+In Class: ${context.isInClass}
+Incomplete Patterns: ${context.incompletePatterns.join(", ") || "None"}
 
-Instructions:
-1. Provide only the code that should be inserted at the cursor
-2. Maintain proper indentation and style
-3. Follow ${context.language} best practices
-4. Make the suggestion contextually appropriate
-
-Generate suggestion:`
+Return only the code to insert at cursor:
+`
 }
 
 /**
  * Generate suggestion using AI service
  */
+// async function generateSuggestion(prompt: string): Promise<string> {
+//     try {
+//         // Replace this with your actual AI service call
+//         const response = await fetch("http://localhost:11434/api/generate", {
+//             method: "POST",
+//             headers: { "Content-Type": "application/json" },
+//             body: JSON.stringify({
+//                 model: "codellama:latest",
+//                 prompt,
+//                 stream: false,
+//                 options: {
+//                     temperature: 0.7,
+//                     max_tokens: 300,
+//                 },
+//             }),
+//         })
+
+//         if (!response.ok) {
+//             throw new Error(`AI service error: ${response.statusText}`)
+//         }
+
+//         const data = await response.json()
+//         let suggestion = data.response
+
+//         // Clean up the suggestion
+//         if (suggestion.includes("```")) {
+//             const codeMatch = suggestion.match(/```[\w]*\n?([\s\S]*?)```/)
+//             suggestion = codeMatch ? codeMatch[1].trim() : suggestion
+//         }
+
+//         // Remove cursor markers if present
+//         suggestion = suggestion.replace(/\|CURSOR\|/g, "").trim()
+
+//         return suggestion
+//     } catch (error) {
+//         console.error("AI generation error:", error)
+//         return "// AI suggestion unavailable"
+//     }
+// }
+
+
 async function generateSuggestion(prompt: string): Promise<string> {
     try {
-        // Replace this with your actual AI service call
-        const response = await fetch("http://localhost:11434/api/generate", {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+                "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+                "Content-Type": "application/json",
+                "HTTP-Referer": "http://localhost:3000",
+                "X-Title": "AI IDE",
+            },
             body: JSON.stringify({
-                model: "codellama:latest",
-                prompt,
-                stream: false,
-                options: {
-                    temperature: 0.7,
-                    max_tokens: 300,
-                },
+                model: "qwen/qwen3-coder",
+                messages: [
+                    { role: "user", content: prompt }
+                ],
+                temperature: 0.2,
+                max_tokens: 200,
             }),
         })
 
-        if (!response.ok) {
-            throw new Error(`AI service error: ${response.statusText}`)
-        }
-
         const data = await response.json()
-        let suggestion = data.response
+        let suggestion = data.choices[0].message.content
 
-        // Clean up the suggestion
+        // Clean markdown
         if (suggestion.includes("```")) {
             const codeMatch = suggestion.match(/```[\w]*\n?([\s\S]*?)```/)
             suggestion = codeMatch ? codeMatch[1].trim() : suggestion
         }
 
-        // Remove cursor markers if present
         suggestion = suggestion.replace(/\|CURSOR\|/g, "").trim()
 
         return suggestion
     } catch (error) {
-        console.error("AI generation error:", error)
+        console.error("OpenRouter suggestion error:", error)
         return "// AI suggestion unavailable"
     }
 }
