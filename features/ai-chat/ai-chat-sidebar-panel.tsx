@@ -53,7 +53,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import "katex/dist/katex.min.css";
 import { EnhancedCodeBlock } from "./ai-chat-code-blocks";
-import { EnhancedFilePreview } from "./file-preview";
 
 interface FileAttachment {
   id: string;
