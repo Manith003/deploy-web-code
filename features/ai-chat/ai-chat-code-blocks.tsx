@@ -7,17 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import {
   Copy,
   Check,
-  Download,
-  Eye,
-  EyeOff,
   MoreHorizontal,
-  Play,
   FileText,
-  Maximize2,
-  Minimize2,
-  ImportIcon as Insert,
-  ThumbsUp,
-  ThumbsDown,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
@@ -47,8 +38,6 @@ export const EnhancedCodeBlock: React.FC<EnhancedCodeBlockProps> = ({
   children,
   className,
   inline,
-  onInsert,
-  onRun,
   showLineNumbers = true,
   theme = "dark",
   maxHeight = 400,
@@ -155,16 +144,6 @@ export const EnhancedCodeBlock: React.FC<EnhancedCodeBlockProps> = ({
     return languageMap[lang.toLowerCase()] || lang.charAt(0).toUpperCase() + lang.slice(1)
   }
 
-  const isExecutable = (lang: string): boolean => {
-    return ["javascript", "python", "bash", "shell", "sql"].includes(lang.toLowerCase())
-  }
-
-  const handleFeedback = (type: "up" | "down") => {
-    setFeedback(type)
-    // Here you could send feedback to your analytics service
-    console.log(`Code block feedback: ${type}`)
-  }
-
   if (inline) {
     return (
       <code className="bg-zinc-800/60 text-zinc-200 px-1.5 py-0.5 rounded text-sm font-mono border border-zinc-700/50">
@@ -174,7 +153,6 @@ export const EnhancedCodeBlock: React.FC<EnhancedCodeBlockProps> = ({
   }
 
   const lineCount = children.split("\n").length
-  const shouldShowControls = lineCount > 3
 
   return (
     <TooltipProvider>
@@ -189,7 +167,7 @@ export const EnhancedCodeBlock: React.FC<EnhancedCodeBlockProps> = ({
               </span>
             </div>
             {lineCount > 1 && (
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs text-white">
                 {lineCount} lines
               </Badge>
             )}
@@ -201,142 +179,6 @@ export const EnhancedCodeBlock: React.FC<EnhancedCodeBlockProps> = ({
           </div>
 
           <div className="flex items-center gap-1">
-            {/* Feedback buttons */}
-            <div className="flex items-center gap-1 mr-2">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "h-7 w-7 p-0 transition-colors",
-                      feedback === "up"
-                        ? "text-green-400 hover:text-green-300"
-                        : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/50",
-                    )}
-                    onClick={() => handleFeedback("up")}
-                  >
-                    <ThumbsUp className="h-3.5 w-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Helpful code</TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "h-7 w-7 p-0 transition-colors",
-                      feedback === "down"
-                        ? "text-red-400 hover:text-red-300"
-                        : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/50",
-                    )}
-                    onClick={() => handleFeedback("down")}
-                  >
-                    <ThumbsDown className="h-3.5 w-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Not helpful</TooltipContent>
-              </Tooltip>
-            </div>
-
-            {shouldShowControls && (
-              <>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 w-7 p-0 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/50 transition-colors"
-                      onClick={() => setShowNumbers(!showNumbers)}
-                    >
-                      {showNumbers ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>{showNumbers ? "Hide line numbers" : "Show line numbers"}</TooltipContent>
-                </Tooltip>
-
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 w-7 p-0 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/50 transition-colors"
-                      onClick={() => setIsFullscreen(!isFullscreen)}
-                    >
-                      {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>{isFullscreen ? "Exit fullscreen" : "Fullscreen"}</TooltipContent>
-                </Tooltip>
-
-                {lineCount > 20 && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/50 transition-colors"
-                        onClick={() => setCollapsed(!collapsed)}
-                      >
-                        <MoreHorizontal className="h-3.5 w-3.5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>{collapsed ? "Expand code" : "Collapse code"}</TooltipContent>
-                  </Tooltip>
-                )}
-              </>
-            )}
-
-            {/* Action buttons */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 w-7 p-0 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/50 transition-colors"
-                  onClick={downloadCode}
-                >
-                  <Download className="h-3.5 w-3.5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Download code</TooltipContent>
-            </Tooltip>
-
-            {onInsert && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition-colors"
-                    onClick={() => onInsert(children)}
-                  >
-                    <Insert className="h-3.5 w-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Insert into editor</TooltipContent>
-              </Tooltip>
-            )}
-
-            {isExecutable(language) && onRun && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 text-green-400 hover:text-green-300 hover:bg-green-500/10 transition-colors"
-                    onClick={() => onRun(children, language)}
-                  >
-                    <Play className="h-3.5 w-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Run code</TooltipContent>
-              </Tooltip>
-            )}
-
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -371,7 +213,6 @@ export const EnhancedCodeBlock: React.FC<EnhancedCodeBlockProps> = ({
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={downloadCode}>Download as File</DropdownMenuItem>
-                {onInsert && <DropdownMenuItem onClick={() => onInsert(children)}>Insert into Editor</DropdownMenuItem>}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -411,7 +252,7 @@ export const EnhancedCodeBlock: React.FC<EnhancedCodeBlockProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={() => setCollapsed(false)}
-                className="text-xs text-zinc-400 hover:text-zinc-200"
+                className="text-xs text-zinc-400 hover:text-zinc-800"
               >
                 Show {lineCount - 10} more lines
               </Button>

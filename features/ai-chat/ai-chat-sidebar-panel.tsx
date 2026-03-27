@@ -987,11 +987,11 @@ export const AIChatSidePanel: React.FC<AIChatSidePanelProps> = ({
                   <div className="grid grid-cols-2 gap-2 max-w-lg mx-auto">
                     {[
                       "Create a React counter component",
-                      "Fix TypeScript compilation errors",
-                      "Optimize database query performance",
-                      "Add comprehensive error handling",
-                      "Implement authentication in Next.js",
-                      "Refactor code for better maintainability",
+                      "how to Fix TypeScript compilation errors",
+                      "how to Optimize database query performance",
+                      "how to Add comprehensive error handling",
+                      "how to Implement authentication in Next.js",
+                      "how to Refactor code for better maintainability",
                     ].map((suggestion) => (
                       <button
                         key={suggestion}
